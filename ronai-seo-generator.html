@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로나이 SEO 생성기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f9f7f5;
+  --surface: #ffffff;
+  --border: #e8e2db;
+  --text: #1a1614;
+  --text-sub: #6b5f58;
+  --text-muted: #a89e97;
+  --accent: #c8705a;
+  --accent-light: #f7ede9;
+  --accent-hover: #b35f4a;
+  --green: #4a8c6e;
+  --green-light: #eaf4ef;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* 헤더 */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 600;
+}
+.logo-text { font-size: 14px; font-weight: 600; }
+.logo-sub { font-size: 12px; color: var(--text-muted); margin-left: 2px; }
+
+/* 레이아웃 */
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  min-height: calc(100vh - 57px);
+}
+
+/* 왼쪽 입력 */
+.input-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px;
+  overflow-y: auto;
+  height: calc(100vh - 57px);
+  position: sticky;
+  top: 57px;
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.field-group { margin-bottom: 16px; }
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-bottom: 5px;
+  display: block;
+}
+.req { color: var(--accent); }
+input[type="text"], input[type="password"], textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus { outline: none; border-color: var(--accent); background: #fff; }
+textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
+
+.api-row { display: flex; gap: 6px; align-items: center; }
+.api-row input { flex: 1; }
+.btn-sm {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-sub);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+/* 이미지 업로드 */
+.upload-area {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg);
+  transition: all 0.15s;
+}
+.upload-area:hover, .upload-area.over { border-color: var(--accent); background: var(--accent-light); }
+.upload-icon { font-size: 22px; margin-bottom: 5px; }
+.upload-text { font-size: 13px; color: var(--text-sub); }
+.upload-hint { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+#fileInput { display: none; }
+
+.preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.preview-item { position: relative; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.preview-remove {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px;
+  background: rgba(0,0,0,0.55); border-radius: 50%;
+  color: #fff; font-size: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border: none;
+}
+
+.note { font-size: 11px; color: var(--text-muted); margin-top: 5px; line-height: 1.5; }
+
+.btn-generate {
+  width: 100%;
+  padding: 13px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 10px;
+}
+.btn-generate:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-generate:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+/* 오른쪽 결과 */
+.result-panel { padding: 24px; overflow-y: auto; }
+
+/* 탭 */
+.tabs { display: flex; border-bottom: 1.5px solid var(--border); margin-bottom: 22px; }
+.tab-btn {
+  padding: 9px 20px; font-size: 13px; font-weight: 500;
+  border: none; background: transparent; color: var(--text-muted);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px; font-family: inherit; transition: color 0.15s;
+}
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* 결과 블록 */
+.result-section { margin-bottom: 22px; }
+.result-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+  color: var(--text-muted); text-transform: uppercase; margin-bottom: 7px;
+}
+.result-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; position: relative;
+}
+.result-box pre {
+  font-size: 13px; line-height: 1.85; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+  font-family: inherit; padding-right: 56px;
+}
+.copy-btn {
+  position: absolute; top: 10px; right: 10px;
+  padding: 4px 10px; font-size: 11px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text-sub); cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.copy-btn:hover { background: var(--border); }
+.copy-btn.ok { background: var(--green-light); color: var(--green); border-color: #b8dccb; }
+
+/* 태그 */
+.tag-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+.tag-chip {
+  background: var(--accent-light); color: var(--accent);
+  border-radius: 20px; font-size: 12px; font-weight: 500;
+  padding: 4px 12px; cursor: pointer;
+  border: 1px solid #e8c5bb; font-family: inherit; transition: background 0.12s;
+}
+.tag-chip:hover { background: #f0cfc7; }
+.tag-chip.ok { background: var(--green-light); color: var(--green); border-color: #b8dccb; }
+.copy-all-btn {
+  margin-top: 9px; padding: 5px 13px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-sub); cursor: pointer; font-family: inherit;
+}
+.copy-all-btn:hover { background: var(--bg); }
+
+.char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 5px; }
+.char-over { color: #c0392b; }
+
+/* 빈 상태 / 로딩 */
+.center-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: calc(100vh - 200px);
+  color: var(--text-muted); text-align: center; gap: 10px;
+}
+.state-icon { font-size: 38px; }
+.state-text { font-size: 14px; line-height: 1.6; }
+.state-sub { font-size: 12px; color: #ccc; }
+.spinner {
+  width: 34px; height: 34px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 에러 */
+.error-box {
+  background: #fdf0ee; border: 1px solid #f4c5bb;
+  border-radius: var(--radius); padding: 13px 16px;
+  font-size: 13px; color: #8c2a1a; margin-bottom: 16px; display: none;
+}
+
+/* 토스트 */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: #1a1614; color: #fff;
+  padding: 9px 20px; border-radius: 20px;
+  font-size: 13px; transition: transform 0.3s; z-index: 999;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* 팁 박스 */
+.tip-box {
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 9px 13px; font-size: 12px; color: #6b3028;
+  margin-bottom: 18px; line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .input-panel { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">R</div>
+  <span class="logo-text">로나이</span>
+  <span class="logo-sub">SEO 생성기</span>
+</header>
+
+<div class="layout">
+
+  <!-- 입력 패널 -->
+  <aside class="input-panel">
+    <p class="panel-title">제품 정보 입력</p>
+
+    <div class="field-group">
+      <label class="field-label">Claude API 키 <span class="req">*</span></label>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+        <button class="btn-sm" onclick="toggleKey()">보기</button>
+      </div>
+      <p class="note">브라우저 메모리에만 저장 · 외부 전송 없음</p>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 이미지 업로드 -->
+    <div class="field-group">
+      <label class="field-label">상세페이지 이미지 <span class="req">*</span></label>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">🖼️</div>
+        <div class="upload-text">클릭 또는 드래그해서 이미지 추가</div>
+        <div class="upload-hint">상세페이지 + 성분표 이미지 — 여러 장 가능</div>
+      </div>
+      <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+
+    <!-- 추가 요청 -->
+    <div class="field-group">
+      <label class="field-label">추가 요청사항 (선택)</label>
+      <textarea id="extraRequest" placeholder="예) 건성 피부 타겟으로 강조해줘&#10;예) 쿨링 기기와 함께 쓰는 포인트 넣어줘" style="min-height:65px;"></textarea>
+    </div>
+
+    <p class="note" style="margin-bottom:10px;">💡 이미지만 올려도 Claude가 제품명·성분·효능을 스스로 읽어요</p>
+
+    <button class="btn-generate" id="genBtn" onclick="generate()">✨ SEO 콘텐츠 생성하기</button>
+    <p class="note" style="text-align:center; margin-top:8px;">Ctrl+Enter로도 실행 가능</p>
+  </aside>
+
+  <!-- 결과 패널 -->
+  <main class="result-panel">
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- 빈 상태 -->
+    <div class="center-state" id="emptyState">
+      <div class="state-icon">🧴</div>
+      <div class="state-text">상세페이지 이미지와 성분표를 올리면<br>Claude가 읽고 SEO 콘텐츠를 만들어드려요</div>
+      <div class="state-sub">네이버 · 아임웹 · 검색설정 3가지를 한번에</div>
+    </div>
+
+    <!-- 로딩 -->
+    <div class="center-state" id="loadingState" style="display:none;">
+      <div class="spinner"></div>
+      <div class="state-text" id="loadingMsg">이미지 분석 중...</div>
+    </div>
+
+    <!-- 결과 -->
+    <div id="resultArea" style="display:none;">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('naver',this)">📦 네이버 스마트스토어</button>
+        <button class="tab-btn" onclick="switchTab('imweb',this)">🌐 아임웹 상세페이지</button>
+        <button class="tab-btn" onclick="switchTab('search',this)">🔍 아임웹 검색설정</button>
+      </div>
+
+      <!-- 네이버 -->
+      <div id="naver" class="tab-panel active">
+        <div class="tip-box">💡 네이버 쇼핑은 상품명 + 첫 설명 키워드 매칭이 핵심이에요</div>
+        <div class="result-section">
+          <div class="result-label">상품명</div>
+          <div class="result-box"><pre id="n-title"></pre><button class="copy-btn" onclick="cp('n-title',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">상품 요약 설명</div>
+          <div class="result-box"><pre id="n-summary"></pre><button class="copy-btn" onclick="cp('n-summary',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">검색 태그 키워드 (클릭하면 복사)</div>
+          <div class="result-box">
+            <div class="tag-wrap" id="n-tags"></div>
+            <button class="copy-all-btn" onclick="copyAllTags('n-tags')">전체 복사</button>
+          </div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">상품 상세 텍스트</div>
+          <div class="result-box"><pre id="n-detail"></pre><button class="copy-btn" onclick="cp('n-detail',this)">복사</button></div>
+        </div>
+      </div>
+
+      <!-- 아임웹 -->
+      <div id="imweb" class="tab-panel">
+        <div class="tip-box">💡 구글 검색 + AI 검색(AEO) 노출 최적화 — 경험 기반 문장으로 AI 감지 최소화했어요</div>
+        <div class="result-section">
+          <div class="result-label">페이지 제목 (H1)</div>
+          <div class="result-box"><pre id="i-h1"></pre><button class="copy-btn" onclick="cp('i-h1',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">도입 문단</div>
+          <div class="result-box"><pre id="i-intro"></pre><button class="copy-btn" onclick="cp('i-intro',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">성분 설명 섹션</div>
+          <div class="result-box"><pre id="i-ing"></pre><button class="copy-btn" onclick="cp('i-ing',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">FAQ 섹션 (AI 검색 인용 핵심)</div>
+          <div class="result-box"><pre id="i-faq"></pre><button class="copy-btn" onclick="cp('i-faq',this)">복사</button></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">추천 대상 + 마무리</div>
+          <div class="result-box"><pre id="i-outro"></pre><button class="copy-btn" onclick="cp('i-outro',this)">복사</button></div>
+        </div>
+      </div>
+
+      <!-- 검색설정 -->
+      <div id="search" class="tab-panel">
+        <div class="tip-box">💡 Page Title은 태그 키워드와 겹치지 않게, 50자 이내로 작성했어요</div>
+        <div class="result-section">
+          <div class="result-label">태그 (최대 10개 — 클릭하면 복사)</div>
+          <div class="result-box">
+            <div class="tag-wrap" id="s-tags"></div>
+            <button class="copy-all-btn" onclick="copyAllTags('s-tags')">전체 복사</button>
+          </div>
+          <p class="note" style="margin-top:6px;">⚠ 브랜드명·판매처명 포함 태그는 아임웹에서 거부될 수 있어 제외했어요</p>
+        </div>
+        <div class="result-section">
+          <div class="result-label">Page Title</div>
+          <div class="result-box"><pre id="s-pt"></pre><button class="copy-btn" onclick="cp('s-pt',this)">복사</button></div>
+          <div class="char-count" id="pt-count"></div>
+        </div>
+        <div class="result-section">
+          <div class="result-label">Meta description</div>
+          <div class="result-box"><pre id="s-md"></pre><button class="copy-btn" onclick="cp('s-md',this)">복사</button></div>
+          <div class="char-count" id="md-count"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let images = [];
+
+// 드래그앤드롭
+const ua = document.getElementById('uploadArea');
+ua.addEventListener('dragover', e => { e.preventDefault(); ua.classList.add('over'); });
+ua.addEventListener('dragleave', () => ua.classList.remove('over'));
+ua.addEventListener('drop', e => { e.preventDefault(); ua.classList.remove('over'); handleFiles(e.dataTransfer.files); });
+
+function handleFiles(files) {
+  [...files].forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      images.push({ base64: ev.target.result.split(',')[1], type: f.type });
+      renderPreviews();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderPreviews() {
+  document.getElementById('previewGrid').innerHTML = images.map((img, i) => `
+    <div class="preview-item">
+      <img src="data:${img.type};base64,${img.base64}">
+      <button class="preview-remove" onclick="removeImg(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeImg(i) { images.splice(i, 1); renderPreviews(); }
+function toggleKey() {
+  const el = document.getElementById('apiKey');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+// 생성
+async function generate() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const extra = document.getElementById('extraRequest').value.trim();
+
+  if (!apiKey) return showErr('API 키를 입력해주세요.');
+  if (images.length === 0) return showErr('이미지를 먼저 올려주세요.');
+
+  hideErr();
+  setState('loading');
+  document.getElementById('genBtn').disabled = true;
+
+  const msgs = ['이미지 분석 중...', '성분 파악 중...', '네이버 콘텐츠 작성 중...', '아임웹 콘텐츠 최적화 중...', '검색설정 구성 중...'];
+  let mi = 0;
+  const iv = setInterval(() => {
+    document.getElementById('loadingMsg').textContent = msgs[mi++ % msgs.length];
+  }, 1600);
+
+  // 메시지 구성
+  const content = [
+    ...images.map(img => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.type, data: img.base64 }
+    })),
+    { type: 'text', text: buildPrompt(extra) }
+  ];
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content }]
+      })
+    });
+
+    clearInterval(iv);
+    if (!res.ok) {
+      const e = await res.json();
+      throw new Error(e.error?.message || `오류 ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content.map(c => c.text || '').join('');
+    render(text);
+
+  } catch(e) {
+    clearInterval(iv);
+    showErr('오류: ' + e.message);
+    setState('empty');
+  } finally {
+    document.getElementById('genBtn').disabled = false;
+  }
+}
+
+function buildPrompt(extra) {
+  return `위 이미지들은 한국 화장품 상세페이지와 성분표예요.
+이미지에서 제품명, 브랜드, 용량, 전성분, 타겟 피부, 효능, 추천 활용법 등을 모두 파악해서 아래 작업을 해주세요.
+
+판매처: 로나이(ronai.co.kr) — 오도라타 브랜드 제품을 로나이에서 큐레이션해서 판매합니다.
+
+작성 원칙:
+- AI가 썼다는 게 느껴지지 않도록 경험 기반 문장, 구어체, 자연스러운 흐름으로 작성
+- "~에 대해 알아보겠습니다" 같은 틀에 박힌 표현 절대 금지
+- 로나이 관점에서 직접 써보고 큐레이션한 제품처럼 표현
+- 화장품법: 미백X→피부톤케어, 주름개선X→피부결케어 등 과장 표현 주의
+- 전성분이 단순하면 그 단순함을 장점으로 표현${extra ? `\n- 추가 요청: ${extra}` : ''}
+
+아래 JSON 형식으로만 응답. 마크다운 코드블록 없이 순수 JSON만:
+
+{
+  "naver": {
+    "title": "상품명: [브랜드] 제품명 + 핵심키워드 (60자 이내)",
+    "summary": "상품 요약: ✔ 체크 형식 포함, 자연스럽게 (200자 내외)",
+    "tags": ["키워드1","키워드2","키워드3","키워드4","키워드5","키워드6","키워드7","키워드8","키워드9"],
+    "detail": "상세 텍스트: 경험 기반 도입 + 성분 설명 + 추천대상 목록 + 사용법 (500자 내외)"
+  },
+  "imweb": {
+    "h1": "H1 제목: 검색 의도 포함 (40자 내외)",
+    "intro": "도입 문단: 로나이 큐레이션 관점, 구어체, 1인칭 경험 포함 (150자 내외)",
+    "ingredients": "성분 설명: 전성분 나열 + 각 성분 역할 구체적 설명 (300자 내외)",
+    "faq": "FAQ 4개: Q. A. 형식, AI 검색 인용 최적화, 실제로 자주 묻는 내용",
+    "outro": "추천 대상 + 마무리: 이런 분께 잘 맞아요 형식 (200자 내외)"
+  },
+  "search": {
+    "tags": ["태그1","태그2","태그3","태그4","태그5","태그6","태그7","태그8","태그9","태그10"],
+    "pageTitle": "Page Title: 태그 키워드와 겹치지 않게, 50자 이내",
+    "metaDesc": "Meta description: 질문에 답하는 형식, 120~160자"
+  }
+}`;
+}
+
+function render(text) {
+  let d;
+  try {
+    d = JSON.parse(text.replace(/```json|```/g, '').trim());
+  } catch {
+    showErr('응답 파싱 실패. 다시 시도해주세요.'); setState('empty'); return;
+  }
+
+  set('n-title', d.naver?.title);
+  set('n-summary', d.naver?.summary);
+  setTags('n-tags', d.naver?.tags);
+  set('n-detail', d.naver?.detail);
+
+  set('i-h1', d.imweb?.h1);
+  set('i-intro', d.imweb?.intro);
+  set('i-ing', d.imweb?.ingredients);
+  set('i-faq', d.imweb?.faq);
+  set('i-outro', d.imweb?.outro);
+
+  setTags('s-tags', d.search?.tags);
+  set('s-pt', d.search?.pageTitle);
+  set('s-md', d.search?.metaDesc);
+
+  // 글자수
+  charCount('s-pt', 'pt-count', 50);
+  charCount('s-md', 'md-count', 160);
+
+  setState('result');
+  switchTab('naver', document.querySelector('.tab-btn'));
+}
+
+function set(id, val) { document.getElementById(id).textContent = val || ''; }
+
+function setTags(id, tags) {
+  if (!tags) return;
+  document.getElementById(id).innerHTML = tags.map(t =>
+    `<button class="tag-chip" onclick="cpTag(this)">${t}</button>`
+  ).join('');
+}
+
+function charCount(id, countId, max) {
+  const len = document.getElementById(id).textContent.length;
+  const el = document.getElementById(countId);
+  el.textContent = len + '자';
+  el.className = 'char-count' + (len > max ? ' char-over' : '');
+}
+
+function setState(s) {
+  document.getElementById('emptyState').style.display = s === 'empty' ? 'flex' : 'none';
+  document.getElementById('loadingState').style.display = s === 'loading' ? 'flex' : 'none';
+  document.getElementById('resultArea').style.display = s === 'result' ? 'block' : 'none';
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function cp(id, btn) {
+  navigator.clipboard.writeText(document.getElementById(id).textContent.trim()).then(() => {
+    btn.textContent = '✓ 복사됨'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = '복사'; btn.classList.remove('ok'); }, 1600);
+  });
+}
+
+function cpTag(el) {
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+    const orig = el.textContent; el.classList.add('ok'); el.textContent = '✓';
+    setTimeout(() => { el.textContent = orig; el.classList.remove('ok'); }, 1400);
+  });
+}
+
+function copyAllTags(id) {
+  const tags = [...document.querySelectorAll(`#${id} .tag-chip`)].map(t => t.textContent.trim()).join(', ');
+  navigator.clipboard.writeText(tags).then(() => toast('전체 태그 복사됨'));
+}
+
+function showErr(msg) { const el = document.getElementById('errorBox'); el.textContent = msg; el.style.display = 'block'; }
+function hideErr() { document.getElementById('errorBox').style.display = 'none'; }
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+</script>
+</body>
+</html>
