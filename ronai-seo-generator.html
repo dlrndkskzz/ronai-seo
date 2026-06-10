@@ -280,9 +280,36 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
 .history-del:hover { color: var(--accent); background: #f4c5bb; }
 .history-empty { font-size: 12px; color: var(--text-muted); text-align: center; padding: 10px 0; }
 
+/* 모바일 상단 탭 */
+.mobile-nav {
+  display: none;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 57px; z-index: 99;
+}
+.mobile-nav-btn {
+  flex: 1; padding: 11px 0; font-size: 13px; font-weight: 600;
+  border: none; background: transparent; color: var(--text-muted);
+  cursor: pointer; font-family: inherit;
+  border-bottom: 2px solid transparent;
+}
+.mobile-nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
 @media (max-width: 768px) {
+  .mobile-nav { display: flex; }
   .layout { grid-template-columns: 1fr; }
-  .input-panel { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+  .input-panel {
+    position: static; height: auto;
+    border-right: none;
+    display: none;
+  }
+  .input-panel.mob-active { display: block; }
+  .result-panel { padding: 16px; display: none; }
+  .result-panel.mob-active { display: block; }
+  .tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+  .tab-btn { padding: 8px 12px; font-size: 12px; }
+  .result-box pre { font-size: 12px; padding-right: 46px; }
+  .tip-box { font-size: 11px; }
 }
 </style>
 </head>
@@ -294,10 +321,16 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
   <span class="logo-sub">SEO 생성기</span>
 </header>
 
+<!-- 모바일 상단 탭 -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-btn active" id="mobInputBtn" onclick="switchMobileTab('input')">✏️ 입력</button>
+  <button class="mobile-nav-btn" id="mobResultBtn" onclick="switchMobileTab('result')">📄 결과</button>
+</div>
+
 <div class="layout">
 
   <!-- 입력 패널 -->
-  <aside class="input-panel">
+  <aside class="input-panel mob-active" id="inputPanel">
     <p class="panel-title">제품 정보 입력</p>
 
     <div class="field-group">
@@ -346,7 +379,7 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
   </aside>
 
   <!-- 결과 패널 -->
-  <main class="result-panel">
+  <main class="result-panel" id="resultPanel">
     <div class="error-box" id="errorBox"></div>
 
     <!-- 빈 상태 -->
@@ -723,7 +756,9 @@ function renderData(d) {
   charCount('s-md', 'md-count', 160);
 
   setState('result');
-  switchTab('naver', document.querySelector('.tab-btn'));
+  const firstTabBtn = document.querySelector('.tabs .tab-btn');
+  if (firstTabBtn) switchTab('naver', firstTabBtn);
+  if (window.innerWidth <= 768) switchMobileTab('result');
 }
 
 function set(id, val) { document.getElementById(id).textContent = val || ''; }
@@ -782,6 +817,24 @@ function toast(msg) {
 }
 
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+
+function switchMobileTab(tab) {
+  const inputPanel = document.getElementById('inputPanel');
+  const resultPanel = document.getElementById('resultPanel');
+  const mobInputBtn = document.getElementById('mobInputBtn');
+  const mobResultBtn = document.getElementById('mobResultBtn');
+  if (tab === 'input') {
+    inputPanel.classList.add('mob-active');
+    resultPanel.classList.remove('mob-active');
+    mobInputBtn.classList.add('active');
+    mobResultBtn.classList.remove('active');
+  } else {
+    inputPanel.classList.remove('mob-active');
+    resultPanel.classList.add('mob-active');
+    mobInputBtn.classList.remove('active');
+    mobResultBtn.classList.add('active');
+  }
+}
 renderHistory();
 </script>
 </body>
