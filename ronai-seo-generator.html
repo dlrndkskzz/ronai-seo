@@ -352,7 +352,7 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
         <div class="upload-text">클릭 또는 드래그해서 이미지 추가</div>
         <div class="upload-hint">이미지(JPG·PNG·WEBP·HEIC) · PDF — 여러 개 가능</div>
       </div>
-      <input type="file" id="fileInput" multiple accept="image/*,.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" onchange="handleFiles(this.files)">
+      <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.pdf,.heic,.heif" onchange="handleFiles(this.files)">
       <div class="preview-grid" id="previewGrid"></div>
     </div>
 
@@ -381,6 +381,7 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
   <!-- 결과 패널 -->
   <main class="result-panel" id="resultPanel">
     <div class="error-box" id="errorBox"></div>
+    <div id="warnBox" style="display:none;background:#fff4e6;border:1px solid #f4c87a;border-radius:10px;padding:12px 16px;font-size:13px;color:#8c4a1a;margin-bottom:12px;align-items:flex-start;gap:6px;flex-wrap:wrap;"></div>
 
     <!-- 빈 상태 -->
     <div class="center-state" id="emptyState">
@@ -577,13 +578,14 @@ function handleFiles(files) {
 
 function renderPreviews() {
   document.getElementById('previewGrid').innerHTML = images.map((img, i) => `
-    <div class="preview-item">
+    <div class="preview-item" style="${img.warn ? 'border:2px solid #e07b3a;' : ''}">
       ${img.isPdf
         ? `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fdf0ee;font-size:22px;gap:4px;">
             📄<span style="font-size:9px;color:#6b5f58;text-align:center;padding:0 4px;word-break:break-all;">${(img.name||'PDF').substring(0,12)}</span>
            </div>`
         : `<img src="data:${img.type};base64,${img.base64}">`
       }
+      ${img.warn ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(224,123,58,0.85);color:#fff;font-size:9px;text-align:center;padding:2px;">⚠️ 해상도 낮음</div>' : ''}
       <button class="preview-remove" onclick="removeImg(${i})">✕</button>
     </div>`).join('');
 }
@@ -816,6 +818,17 @@ function copyAllTags(id) {
 
 function showErr(msg) { const el = document.getElementById('errorBox'); el.textContent = msg; el.style.display = 'block'; }
 function hideErr() { document.getElementById('errorBox').style.display = 'none'; }
+
+function showWarn(msg, dismissable) {
+  const panel = document.getElementById('warnBox');
+  if (!panel) return;
+  panel.innerHTML = `
+    <span>${msg}</span>
+    <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;cursor:pointer;font-size:14px;color:#8c4a1a;margin-left:8px;flex-shrink:0;">✕</button>
+  `;
+  panel.style.display = 'flex';
+  if (!dismissable) setTimeout(() => { panel.style.display = 'none'; }, 5000);
+}
 function toast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
