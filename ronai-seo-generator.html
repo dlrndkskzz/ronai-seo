@@ -350,9 +350,9 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
       <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
         <div class="upload-icon">🖼️</div>
         <div class="upload-text">클릭 또는 드래그해서 이미지 추가</div>
-        <div class="upload-hint">이미지(JPG·PNG·WEBP·HEIC) · PDF — 여러 개 가능</div>
+        <div class="upload-hint">JPG · PNG · WEBP · HEIC · PDF — 여러 개 가능</div>
       </div>
-      <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.pdf,.heic,.heif" onchange="handleFiles(this.files)">
+      <input type="file" id="fileInput" multiple accept="*/*" onchange="handleFiles(this.files)">
       <div class="preview-grid" id="previewGrid"></div>
     </div>
 
@@ -550,14 +550,50 @@ ua.addEventListener('dragleave', () => ua.classList.remove('over'));
 ua.addEventListener('drop', e => { e.preventDefault(); ua.classList.remove('over'); handleFiles(e.dataTransfer.files); });
 
 function handleFiles(files) {
+  const allowed = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/bmp','image/tiff','application/pdf'];
+  
   [...files].forEach(f => {
-    if (!f.type.startsWith('image/')) return;
+    const fname = f.name.toLowerCase();
+    const isPdf = f.type === 'application/pdf' || fname.endsWith('.pdf');
+    const isHeic = fname.endsWith('.heic') || fname.endsWith('.heif');
+    const isImage = f.type.startsWith('image/') || isHeic;
+
+    if (!isPdf && !isImage) {
+      showWarn('⚠️ ' + f.name + ' 은 지원하지 않는 형식이에요. 이미지나 PDF만 올려주세요.');
+      return;
+    }
+
+    if (isPdf) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const base64 = ev.target.result.split(',')[1];
+        images.push({ base64, type: 'application/pdf', name: f.name, isPdf: true });
+        renderPreviews();
+      };
+      reader.onerror = () => showWarn('❌ ' + f.name + ' PDF를 읽지 못했어요.');
+      reader.readAsDataURL(f);
+      return;
+    }
+
+    // 이미지 처리
     const reader = new FileReader();
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
+        const origW = img.width;
+        const origH = img.height;
+        const isLowRes = origW < 500 || origH < 500;
+
+        if (isLowRes) {
+          showWarn(
+            '⚠️ "' + f.name + '" 이미지가 너무 작아요 (' + origW + '×' + origH + 'px)
+글씨를 제대로 못 읽을 수 있어요. 더 선명한 이미지로 다시 올려주세요!',
+            true
+          );
+        }
+
         const MAX = 2000;
-        let w = img.width, h = img.height;
+        let w = origW, h = origH;
         if (w > MAX || h > MAX) {
           const ratio = Math.min(MAX / w, MAX / h);
           w = Math.round(w * ratio);
@@ -566,12 +602,14 @@ function handleFiles(files) {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const base64 = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
-        images.push({ base64, type: 'image/jpeg' });
+        const base64 = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+        images.push({ base64, type: 'image/jpeg', name: f.name, warn: isLowRes, w: origW, h: origH });
         renderPreviews();
       };
+      img.onerror = () => showWarn('❌ ' + f.name + ' 이미지를 읽지 못했어요.');
       img.src = ev.target.result;
     };
+    reader.onerror = () => showWarn('❌ ' + f.name + ' 파일을 읽지 못했어요.');
     reader.readAsDataURL(f);
   });
 }
@@ -663,6 +701,13 @@ function buildPrompt(extra) {
 이미지에서 제품명, 브랜드, 용량, 전성분, 타겟 피부, 효능, 추천 활용법 등을 모두 파악해서 아래 작업을 해주세요.
 
 판매처: 로나이(ronai.co.kr) — 오도라타 브랜드 제품을 로나이에서 직접 써보고 엄선해서 판매합니다.
+
+===== 절대 원칙 — 이미지 기반 작성 =====
+- 이미지에 명확히 보이는 정보만 사용할 것
+- 이미지에 없는 효능, 성분, 사용법, 수치는 절대 지어내지 말 것
+- 성분표에 없는 성분은 언급 금지
+- 애매하거나 안 보이는 내용은 생략하고 확실한 것만 작성
+- 제품명, 브랜드, 전성분, 용량이 이미지에서 안 보이면 "확인 필요"라고만 표시
 
 ===== 핵심 작성 원칙 =====
 
