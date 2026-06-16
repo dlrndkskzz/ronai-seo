@@ -267,6 +267,9 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
 
 /* 히스토리 */
 .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.history-actions { display: flex; gap: 6px; align-items: center; }
+.history-io-btn { font-size: 11px; color: #a89e97; background: none; border: 1px solid #e8e2db; border-radius: 5px; cursor: pointer; font-family: inherit; padding: 3px 8px; }
+.history-io-btn:hover { color: #c8705a; border-color: #c8705a; }
 .history-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
 .history-clear-all { font-size: 11px; color: var(--text-muted); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
 .history-clear-all:hover { color: var(--accent); }
@@ -372,7 +375,12 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
     <div>
       <div class="history-header">
         <span class="history-label">📋 히스토리</span>
-        <button class="history-clear-all" onclick="clearAllHistory()">전체 삭제</button>
+        <div class="history-actions">
+          <button class="history-io-btn" onclick="exportHistory()">⬇ 내보내기</button>
+          <button class="history-io-btn" onclick="document.getElementById('importInput').click()">⬆ 가져오기</button>
+          <input type="file" id="importInput" accept=".json" style="display:none" onchange="importHistory(this)">
+          <button class="history-clear-all" onclick="clearAllHistory()">전체 삭제</button>
+        </div>
       </div>
       <div class="history-list" id="historyList"></div>
     </div>
@@ -880,6 +888,46 @@ function toast(msg) {
 }
 
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate(); });
+
+function exportHistory() {
+  const history = loadHistory();
+  if (history.length === 0) { toast('저장된 히스토리가 없어요'); return; }
+  const json = JSON.stringify(history, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = 'ronai-seo-history-' + date + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('히스토리 내보내기 완료!');
+}
+
+function importHistory(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      const current = loadHistory();
+      // 중복 id 제거 후 합치기
+      const merged = [...imported, ...current];
+      const seen = new Set();
+      const deduped = merged.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id); return true;
+      }).slice(0, 30);
+      saveToStorage(deduped);
+      renderHistory();
+      toast('히스토리 ' + imported.length + '개 가져오기 완료!');
+    } catch {
+      toast('❌ 올바른 히스토리 파일이 아니에요');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
 
 function switchMobileTab(tab) {
   const inputPanel = document.getElementById('inputPanel');
