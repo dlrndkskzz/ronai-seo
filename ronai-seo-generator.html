@@ -555,22 +555,23 @@ function clearAllHistory() {
 }
 
 // ── 드래그앤드롭 + 클릭 ──────────────────────────────────────────
-// 1) document 전체에서 브라우저 기본 드래그 동작(새 탭으로 열기) 차단
+// document 전체에서 브라우저 기본 드래그 동작(새 탭으로 열기) 차단
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop',     e => e.preventDefault());
 
-document.addEventListener('DOMContentLoaded', () => {
+// script가 </body> 앞에 있으므로 DOM이 이미 완성됨 → DOMContentLoaded 불필요
+(function() {
   const ua = document.getElementById('uploadArea');
   const fi = document.getElementById('fileInput');
   if (!ua || !fi) return;
 
-  // 2) 클릭으로 파일 선택창 열기
+  // 클릭으로 파일 선택창 열기
   ua.addEventListener('click', () => {
-    fi.value = '';   // 같은 파일 재선택 허용
+    fi.value = '';
     fi.click();
   });
 
-  // 3) uploadArea 드래그앤드롭
+  // uploadArea 드래그앤드롭
   ua.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); ua.classList.add('over'); });
   ua.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); ua.classList.add('over'); });
   ua.addEventListener('dragleave', e => {
@@ -584,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
       handleFiles(e.dataTransfer.files);
     }
   });
-});
+})();
 
 function handleFiles(files) {
   const allowed = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/bmp','image/tiff','application/pdf'];
