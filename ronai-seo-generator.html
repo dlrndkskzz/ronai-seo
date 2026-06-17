@@ -353,12 +353,12 @@ textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
     <!-- 이미지 업로드 -->
     <div class="field-group">
       <label class="field-label">상세페이지 이미지 <span class="req">*</span></label>
-      <label class="upload-area" id="uploadArea" for="fileInput">
+      <div class="upload-area" id="uploadArea">
         <div class="upload-icon">🖼️</div>
         <div class="upload-text">클릭 또는 드래그해서 이미지 추가</div>
         <div class="upload-hint">JPG · PNG · WEBP · HEIC · PDF — 여러 개 가능</div>
-      </label>
-      <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/heic,image/heif,application/pdf,.heic,.heif,.pdf" onchange="handleFiles(this.files)">
+      </div>
+      <input type="file" id="fileInput" multiple accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/bmp,image/tiff,image/heic,image/heif,application/pdf,.heic,.heif,.pdf" style="display:none" onchange="handleFiles(this.files)">
       <div class="preview-grid" id="previewGrid"></div>
     </div>
 
@@ -554,17 +554,30 @@ function clearAllHistory() {
   toast('전체 삭제됐어요');
 }
 
-// 드래그앤드롭 — DOMContentLoaded 이후 안전하게 등록
+// 드래그앤드롭 + 클릭 — DOMContentLoaded 이후 안전하게 등록
 document.addEventListener('DOMContentLoaded', () => {
   const ua = document.getElementById('uploadArea');
-  if (!ua) return;
+  const fi = document.getElementById('fileInput');
+  if (!ua || !fi) return;
+
+  // 클릭으로 파일 선택창 열기
+  ua.addEventListener('click', () => {
+    fi.value = '';          // 같은 파일 재선택 허용
+    fi.click();
+  });
+
+  // 드래그앤드롭
   ua.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); ua.classList.add('over'); });
   ua.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); ua.classList.add('over'); });
-  ua.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); ua.classList.remove('over'); });
+  ua.addEventListener('dragleave', e => {
+    e.preventDefault(); e.stopPropagation();
+    // uploadArea 바깥으로 나갈 때만 over 제거
+    if (!ua.contains(e.relatedTarget)) ua.classList.remove('over');
+  });
   ua.addEventListener('drop', e => {
     e.preventDefault(); e.stopPropagation();
     ua.classList.remove('over');
-    handleFiles(e.dataTransfer.files);
+    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   });
 });
 
